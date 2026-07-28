@@ -1,4 +1,4 @@
-import { Module, MiddlewareConsumer, NestModule } from "@nestjs/common";
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from "@nestjs/common";
 import { CommonModule } from "./common/common.module";
 import { TenantMiddleware } from "./common/tenant.middleware";
 import { BookingsModule } from "./bookings/bookings.module";
@@ -27,6 +27,9 @@ import { SupportModule } from "./support/support.module";
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(TenantMiddleware).forRoutes("*");
+    consumer
+      .apply(TenantMiddleware)
+      .exclude({ path: "payments/webhook/(.*)", method: RequestMethod.ALL })
+      .forRoutes("*");
   }
 }

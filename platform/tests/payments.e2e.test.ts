@@ -8,6 +8,11 @@ import { Test } from "@nestjs/testing";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import request from "supertest";
 import { createHmac } from "crypto";
+
+jest.mock("@dtd/chain-sdk/verify", () => ({
+  isReleasable: jest.fn(async () => false),
+}));
+
 import { AppModule } from "../api/app.module";
 import {
   signTestJwt, seedTenant, seedBooking, resetDb, mockChainIsReleasable,

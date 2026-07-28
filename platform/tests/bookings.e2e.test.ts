@@ -66,7 +66,7 @@ describe("Bookings E2E", () => {
 
     expect(res.body.status).toBe("CONFIRMED");
     expect(res.body.stops).toHaveLength(3);
-    this.bookingId = res.body.id;
+    
     (global as any).bookingId = res.body.id;
   });
 

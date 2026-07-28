@@ -15,9 +15,7 @@ export interface TenantRequest extends Request {
 @Injectable()
 export class TenantMiddleware implements NestMiddleware {
   use(req: TenantRequest, _res: Response, next: NextFunction) {
-    // Webhooks authenticate by signature, not bearer token.
-    if (req.path.startsWith("/payments/webhook")) return next();
-
+    
     const auth = req.headers.authorization;
     if (!auth?.startsWith("Bearer ")) throw new UnauthorizedException();
 

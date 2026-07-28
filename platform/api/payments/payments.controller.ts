@@ -1,6 +1,6 @@
 import {
   BadRequestException, Body, Controller, Get, Headers, Param,
-  ParseUUIDPipe, Post, Req,
+  ParseUUIDPipe, Post, Req, UsePipes, ValidationPipe,
 } from "@nestjs/common";
 import { PaymentsService } from "./payments.service";
 import { CreateCollectionDto } from "./payments.dto";
@@ -23,6 +23,7 @@ export class PaymentsController {
 
   /** Gateway webhook — authenticated by HMAC signature, NOT bearer token. */
   @Post("webhook/gateway")
+  @UsePipes(new ValidationPipe({ whitelist: false, forbidNonWhitelisted: false, transform: false }))
   gatewayWebhook(
     @Headers("x-razorpay-signature") signature: string,
     @Body() body: any
@@ -37,6 +38,7 @@ export class PaymentsController {
    * isReleasable() condition the on-chain Escrow enforces.
    */
   @Post("webhook/release-gate")
+  @UsePipes(new ValidationPipe({ whitelist: false, forbidNonWhitelisted: false, transform: false }))
   releaseGate(
     @Headers("x-dtd-internal-signature") signature: string,
     @Body() body: { manifestId: string; bookingId: string; transporterId: string }

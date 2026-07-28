@@ -54,11 +54,15 @@ export class PaymentsService {
     const expected = createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET!)
       .update(JSON.stringify(body))
       .digest("hex");
+    
+
     const a = Buffer.from(signature);
     const b = Buffer.from(expected);
     if (a.length !== b.length || !timingSafeEqual(a, b)) {
       throw new UnauthorizedException("BAD_WEBHOOK_SIGNATURE");
     }
+
+    
 
     const event = body.event as string;
     const orderId = body.payload?.payment?.entity?.order_id as string;
