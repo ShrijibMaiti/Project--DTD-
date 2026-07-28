@@ -57,7 +57,7 @@ export class DocumentsService {
     return this.db.withTenant(transporterId, async (c) => {
       const booking = await c.query(
         `SELECT b.id, b.trip_id, t.contact_phone
-         FROM bookings b JOIN transporters t ON t.id = b.transporter_id
+         FROM bookings b JOIN transporters t ON t.id = b.company_id
          WHERE b.id=$1`,
         [dto.bookingId]
       );
@@ -83,7 +83,7 @@ export class DocumentsService {
       // 5. Record
       const { rows } = await c.query(
         `INSERT INTO documents
-           (transporter_id, booking_id, doc_type, storage_key, doc_hash, chain_tx, status)
+           (company_id, booking_id, doc_type, storage_key, doc_hash, chain_tx, status)
          VALUES ($1,$2,$3,$4,$5,$6,'ANCHORED') RETURNING *`,
         [transporterId, dto.bookingId, dto.docType, storageKey, docHash, txHash]
       );

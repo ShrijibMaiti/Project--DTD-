@@ -57,7 +57,7 @@ export class InsuranceService {
 
       const { rows } = await c.query(
         `INSERT INTO insurance_policies
-           (transporter_id, booking_id, policy_number, declared_value_inr, premium_inr, status)
+           (company_id, booking_id, policy_number, declared_value_inr, premium_inr, status)
          VALUES ($1,$2,$3,$4,$5,'ACTIVE') RETURNING *`,
         [transporterId, dto.bookingId, policy.policyNumber, dto.declaredValueInr, policy.premiumInr]
       );

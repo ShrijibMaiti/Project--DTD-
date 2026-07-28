@@ -35,7 +35,7 @@ export class PricingService {
     return this.db.withTenant(transporterId, async (c) => {
       const { rows } = await c.query(
         `INSERT INTO price_quotes
-           (transporter_id, truck_type, material_weight_kg, distance_km,
+           (company_id, truck_type, material_weight_kg, distance_km,
             estimated_price_inr, range_low_inr, range_high_inr, expires_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7, now() + interval '${QUOTE_TTL_MINUTES} minutes')
          RETURNING id, estimated_price_inr, range_low_inr, range_high_inr, expires_at`,

@@ -93,7 +93,7 @@ export class ClaimsService {
       const packetHash = keccak256(new TextEncoder().encode(packetJson));
 
       const { rows } = await c.query(
-        `INSERT INTO claims_packets (transporter_id, booking_id, packet, packet_hash)
+        `INSERT INTO claims_packets (company_id, booking_id, packet, packet_hash)
          VALUES ($1,$2,$3,$4)
          ON CONFLICT (booking_id) DO UPDATE
            SET packet=$3, packet_hash=$4, updated_at=now()

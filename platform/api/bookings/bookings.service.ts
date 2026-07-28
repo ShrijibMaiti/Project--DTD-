@@ -36,7 +36,7 @@ export class BookingsService {
     return this.db.withTenant(transporterId, async (c) => {
       const { rows } = await c.query(
         `INSERT INTO bookings
-           (transporter_id, quote_id, truck_type, material_weight_kg,
+           (company_id, quote_id, truck_type, material_weight_kg,
             scheduled_at, status, estimated_price_inr, notes, created_by)
          VALUES ($1,$2,$3,$4,$5,'CONFIRMED',$6,$7,$8)
          RETURNING *`,

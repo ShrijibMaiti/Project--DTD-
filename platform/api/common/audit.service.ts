@@ -15,7 +15,7 @@ export class AuditService {
   }) {
     await this.db.asSystem((c) =>
       c.query(
-        `INSERT INTO audit_log (transporter_id, user_id, action, entity, entity_id, detail)
+        `INSERT INTO audit_log (company_id, user_id, action, entity, entity_id, detail)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [
           params.transporterId,

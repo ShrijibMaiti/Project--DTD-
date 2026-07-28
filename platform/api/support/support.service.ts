@@ -11,7 +11,7 @@ export class SupportService {
     return this.db.withTenant(transporterId, async (c) => {
       const { rows } = await c.query(
         `INSERT INTO support_tickets
-           (transporter_id, booking_id, category, subject, status, created_by)
+           (company_id, booking_id, category, subject, status, created_by)
          VALUES ($1,$2,$3,$4,'OPEN',$5) RETURNING *`,
         [transporterId, dto.bookingId ?? null, dto.category, dto.subject, userId]
       );

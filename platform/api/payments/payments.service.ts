@@ -28,7 +28,7 @@ export class PaymentsService {
 
       const { rows } = await c.query(
         `INSERT INTO payments
-           (transporter_id, booking_id, amount_inr, method, status, gateway_order_id)
+           (company_id, booking_id, amount_inr, method, status, gateway_order_id)
          VALUES ($1,$2,$3,$4,'PENDING',$5) RETURNING *`,
         [transporterId, dto.bookingId, dto.amountInr, dto.method, gatewayOrderId]
       );

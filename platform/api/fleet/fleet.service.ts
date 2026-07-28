@@ -14,7 +14,7 @@ export class FleetService {
 
       const { rows } = await c.query(
         `INSERT INTO trucks
-           (transporter_id, reg_number, truck_type, capacity_kg, gps_device_id, status)
+           (company_id, reg_number, truck_type, capacity_kg, gps_device_id, status)
          VALUES ($1,$2,$3,$4,$5,'AVAILABLE') RETURNING *`,
         [transporterId, dto.regNumber, dto.truckType, dto.capacityKg, dto.gpsDeviceId ?? null]
       );
@@ -53,7 +53,7 @@ export class FleetService {
       // will mint this driver's signing key; the address lands in signing_address.
       const { rows } = await c.query(
         `INSERT INTO drivers
-           (transporter_id, full_name, phone, license_number, status)
+           (company_id, full_name, phone, license_number, status)
          VALUES ($1,$2,$3,$4,'ACTIVE') RETURNING *`,
         [transporterId, dto.fullName, dto.phone, dto.licenseNumber]
       );

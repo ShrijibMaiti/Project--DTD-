@@ -1,13 +1,13 @@
-ï»¿/**
+/**
  * platform/tests/helpers.ts
  *
  * Shared e2e test utilities: DB reset, tenant/fleet/booking seeding,
- * test JWT signing (matches DtdAuthGuard exactly â€” Domain 7's jwt.ts), and a
+ * test JWT signing (matches DtdAuthGuard exactly — Domain 7's jwt.ts), and a
  * jest mock for chain/sdk/verify.ts's isReleasable() so payment tests
  * don't need a live anvil node.
  *
  * IMPORTANT: seeding uses the same SET LOCAL app.company_id / app.actor_role
- * pattern as DatabaseService.withTenant() â€” RLS is FORCE ROW LEVEL SECURITY,
+ * pattern as DatabaseService.withTenant() — RLS is FORCE ROW LEVEL SECURITY,
  * so a plain INSERT with no app.company_id set will be silently rejected
  * (0 rows affected, no error) rather than throwing. Every tenant-scoped
  * seed insert below runs inside BEGIN / SET LOCAL / ... / COMMIT.
@@ -86,7 +86,7 @@ export async function seedTenant(legalName: string): Promise<SeededTenant> {
     await client.query("SELECT set_config('app.actor_role', 'COMPANY_ADMIN', true)");
 
     const userRes = await client.query(
-      `INSERT INTO users (transporter_id, full_name, phone, role)
+      `INSERT INTO users (company_id, full_name, phone, role)
        VALUES ($1, $2, $3, 'OWNER')
        RETURNING id`,
       [transporterId, `${legalName} Owner`, randomPhone()]
@@ -113,13 +113,13 @@ export interface SeededFleet {
 export async function seedTruckAndDriver(transporterId: string): Promise<SeededFleet> {
   return withTenantTx(transporterId, async (client) => {
     const truckRes = await client.query(
-      `INSERT INTO trucks (transporter_id, reg_number, truck_type, capacity_kg, status)
+      `INSERT INTO trucks (company_id, reg_number, truck_type, capacity_kg, status)
        VALUES ($1, $2, 'OPEN_14FT', 14000, 'AVAILABLE')
        RETURNING id`,
       [transporterId, randomRegNumber()]
     );
     const driverRes = await client.query(
-      `INSERT INTO drivers (transporter_id, full_name, phone, license_number, status)
+      `INSERT INTO drivers (company_id, full_name, phone, license_number, status)
        VALUES ($1, $2, $3, $4, 'ACTIVE')
        RETURNING id`,
       [transporterId, "Test Driver", randomPhone(), randomLicense()]
@@ -134,7 +134,7 @@ export async function seedBooking(transporterId: string): Promise<string> {
   return withTenantTx(transporterId, async (client) => {
     const quoteRes = await client.query(
       `INSERT INTO price_quotes
-         (transporter_id, truck_type, material_weight_kg, distance_km,
+         (company_id, truck_type, material_weight_kg, distance_km,
           estimated_price_inr, range_low_inr, range_high_inr, expires_at)
        VALUES ($1, 'OPEN_14FT', 4000, 250, 15000, 14000, 16000, now() + interval '30 minutes')
        RETURNING id`,
@@ -144,7 +144,7 @@ export async function seedBooking(transporterId: string): Promise<string> {
 
     const bookingRes = await client.query(
       `INSERT INTO bookings
-         (transporter_id, quote_id, truck_type, material_weight_kg, scheduled_at,
+         (company_id, quote_id, truck_type, material_weight_kg, scheduled_at,
           status, estimated_price_inr)
        VALUES ($1, $2, 'OPEN_14FT', 4000, now() + interval '1 day', 'CONFIRMED', 15000)
        RETURNING id`,
@@ -164,7 +164,7 @@ export function signTestJwt(
   modules: PlatformModule[] = modulesForPlan(Plan.ENTERPRISE)
 ): string {
   if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET not set â€” check .env.test is loaded");
+    throw new Error("JWT_SECRET not set — check .env.test is loaded");
   }
   return signAccessToken(
     { sub: userId, companyId, role, modules, tokenVersion: 1 },

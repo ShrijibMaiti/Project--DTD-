@@ -18,7 +18,7 @@ export class KycService {
     return this.db.withTenant(transporterId, async (c) => {
       const { rows } = await c.query(
         `INSERT INTO kyc_records
-           (transporter_id, doc_kind, storage_key, subject_type, subject_id, status)
+           (company_id, doc_kind, storage_key, subject_type, subject_id, status)
          VALUES ($1,$2,$3,$4,$5,'PENDING') RETURNING id, status, created_at`,
         [transporterId, dto.docKind, dto.storageKey, dto.subjectType, dto.subjectId]
       );
