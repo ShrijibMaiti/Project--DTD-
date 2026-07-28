@@ -12,8 +12,9 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@dtd/chain-sdk/*": ["../chain/sdk/*"]
+      "@dtd/chain-sdk/*": ["../chain/sdk/*"],
+      "@dtd/shared/*": ["../shared/*"],
+      "@dtd/identity/*": ["../identity/*"]
     }
   }
 }
-

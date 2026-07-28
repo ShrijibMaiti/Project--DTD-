@@ -2,19 +2,21 @@
  * platform/tests/helpers.ts
  *
  * Shared e2e test utilities: DB reset, tenant/fleet/booking seeding,
- * test JWT signing (matches TenantMiddleware.verifyJwt exactly), and a
+ * test JWT signing (matches DtdAuthGuard exactly — Domain 7's jwt.ts), and a
  * jest mock for chain/sdk/verify.ts's isReleasable() so payment tests
  * don't need a live anvil node.
  *
- * IMPORTANT: seeding uses the same SET LOCAL app.transporter_id pattern
- * as DatabaseService.withTenant() — RLS is FORCE ROW LEVEL SECURITY, so
- * a plain INSERT with no app.transporter_id set will be silently rejected
+ * IMPORTANT: seeding uses the same SET LOCAL app.company_id / app.actor_role
+ * pattern as DatabaseService.withTenant() — RLS is FORCE ROW LEVEL SECURITY,
+ * so a plain INSERT with no app.company_id set will be silently rejected
  * (0 rows affected, no error) rather than throwing. Every tenant-scoped
  * seed insert below runs inside BEGIN / SET LOCAL / ... / COMMIT.
  */
 import { Pool, PoolClient } from "pg";
-import { createHmac } from "crypto";
 import { isReleasable } from "@dtd/chain-sdk/verify";
+import { signAccessToken } from "@dtd/identity/auth/jwt";
+import { Role } from "@dtd/shared/roles.schema";
+import { Plan, modulesForPlan, type PlatformModule } from "@dtd/shared/modules.schema";
 
 // ---------------------------------------------------------------- pool
 
@@ -30,7 +32,7 @@ export async function resetDb(): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query("SELECT set_config('app.role', 'system', true)");
+    await client.query("SELECT set_config('app.is_system', 'true', true)");
     await client.query(`
       TRUNCATE TABLE
         audit_log,
@@ -80,9 +82,8 @@ export async function seedTenant(legalName: string): Promise<SeededTenant> {
     );
     const transporterId: string = transporterRes.rows[0].id;
 
-    await client.query("SELECT set_config('app.transporter_id', $1, true)", [
-      transporterId,
-    ]);
+    await client.query("SELECT set_config('app.company_id', $1, true)", [transporterId]);
+    await client.query("SELECT set_config('app.actor_role', 'COMPANY_ADMIN', true)");
 
     const userRes = await client.query(
       `INSERT INTO users (transporter_id, full_name, phone, role)
@@ -156,22 +157,28 @@ export async function seedBooking(transporterId: string): Promise<string> {
 
 // ---------------------------------------------------------------- jwt
 
-export function signTestJwt(userId: string, transporterId: string): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET not set — check .env.test is loaded");
-
-  const header = { alg: "HS256", typ: "JWT" };
-  const payload = { sub: userId, transporter_id: transporterId };
-
-  const h = base64url(JSON.stringify(header));
-  const p = base64url(JSON.stringify(payload));
-  const sig = createHmac("sha256", secret).update(`${h}.${p}`).digest("base64url");
-
-  return `${h}.${p}.${sig}`;
+export function signTestJwt(
+  userId: string,
+  companyId: string | null,
+  role: Role = Role.COMPANY_ADMIN,
+  modules: PlatformModule[] = modulesForPlan(Plan.ENTERPRISE)
+): string {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET not set — check .env.test is loaded");
+  }
+  return signAccessToken(
+    { sub: userId, companyId, role, modules, tokenVersion: 1 },
+    process.env.JWT_SECRET
+  );
 }
 
-function base64url(input: string): string {
-  return Buffer.from(input).toString("base64url");
+export function signPlanJwt(
+  userId: string,
+  companyId: string,
+  plan: Plan,
+  role: Role = Role.COMPANY_ADMIN
+): string {
+  return signTestJwt(userId, companyId, role, modulesForPlan(plan));
 }
 
 // ---------------------------------------------------------------- chain mock
@@ -189,7 +196,8 @@ async function withTenantTx<T>(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query("SELECT set_config('app.transporter_id', $1, true)", [transporterId]);
+    await client.query("SELECT set_config('app.company_id', $1, true)", [transporterId]);
+    await client.query("SELECT set_config('app.actor_role', 'COMPANY_ADMIN', true)");
     const result = await fn(client);
     await client.query("COMMIT");
     return result;

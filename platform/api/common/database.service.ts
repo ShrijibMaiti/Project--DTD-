@@ -1,11 +1,22 @@
 /**
  * The only path to Postgres. Every tenant-scoped query runs inside
- * withTenant(), which SETs app.transporter_id for the transaction so
- * the RLS policies in db/rls-policies.sql are enforced by the DB itself —
- * application code CANNOT forget tenant isolation.
+ * withActor(), which sets THREE session variables consumed by the RLS
+ * policies in db/rls-policies.sql:
+ *
+ *   app.company_id  — the tenant uuid
+ *   app.actor_role  — the RBAC role, so SUPER_ADMIN can cross tenants
+ *   app.is_system   — 'true' only for jobs and webhooks
+ *
+ * Application code CANNOT forget tenant isolation: the database enforces it.
  */
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, PoolClient } from "pg";
+import type { Role } from "@dtd/shared/roles.schema";
+
+export interface DbActor {
+  companyId: string | null;
+  role: Role;
+}
 
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
@@ -19,17 +30,24 @@ export class DatabaseService implements OnModuleDestroy {
     await this.pool.end();
   }
 
-  /** Tenant-scoped transaction. transporterId comes from auth, never from input. */
-  async withTenant<T>(
-    transporterId: string,
+  /**
+   * Actor-scoped transaction. The actor comes from the verified JWT
+   * (DtdAuthGuard), never from request input.
+   */
+  async withActor<T>(
+    actor: DbActor,
     fn: (client: PoolClient) => Promise<T>
   ): Promise<T> {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
-      await client.query("SELECT set_config('app.transporter_id', $1, true)", [
-        transporterId,
+      await client.query("SELECT set_config('app.company_id', $1, true)", [
+        actor.companyId ?? "",
       ]);
+      await client.query("SELECT set_config('app.actor_role', $1, true)", [
+        actor.role,
+      ]);
+      await client.query("SELECT set_config('app.is_system', 'false', true)");
       const result = await fn(client);
       await client.query("COMMIT");
       return result;
@@ -41,12 +59,30 @@ export class DatabaseService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Back-compat shim so the 11 existing service files keep working while
+   * controllers are migrated one at a time. Treats the id as the company id
+   * and assumes COMPANY_ADMIN scope.
+   *
+   * DELETE THIS once every caller passes a real actor — a shim that
+   * hardcodes a role is exactly the kind of thing that outlives its welcome.
+   */
+  async withTenant<T>(
+    companyId: string,
+    fn: (client: PoolClient) => Promise<T>
+  ): Promise<T> {
+    return this.withActor(
+      { companyId, role: "COMPANY_ADMIN" as Role },
+      fn
+    );
+  }
+
   /** For system jobs (webhooks, workers) that legitimately cross tenants. */
   async asSystem<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
-      await client.query("SELECT set_config('app.role', 'system', true)");
+      await client.query("SELECT set_config('app.is_system', 'true', true)");
       const result = await fn(client);
       await client.query("COMMIT");
       return result;

@@ -4,6 +4,8 @@
   rootDir: ".",
   moduleNameMapper: {
     "^@dtd/chain-sdk/(.*)$": "<rootDir>/../chain/sdk/$1",
+    "^@dtd/shared/(.*)$": "<rootDir>/../shared/$1",
+    "^@dtd/identity/(.*)$": "<rootDir>/../identity/$1",
   },
   testRegex: ".*\\.e2e\\.test\\.ts$",
   setupFiles: ["<rootDir>/tests/jest.setup.ts"],
