@@ -79,28 +79,28 @@ DROP POLICY IF EXISTS tenant_isolation ON support_tickets;
 DROP POLICY IF EXISTS tenant_isolation ON support_messages;
 
 -- ---------------------------------------------------------------- policies
--- transporter_id is the tenant column and holds the SAME uuid as companies.id.
+-- company_id is the tenant column and holds the SAME uuid as companies.id.
 -- Migration B renames it to company_id.
 CREATE POLICY tenant_isolation ON trucks
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 CREATE POLICY tenant_isolation ON drivers
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 CREATE POLICY tenant_isolation ON price_quotes
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 CREATE POLICY tenant_isolation ON bookings
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 CREATE POLICY tenant_isolation ON kyc_records
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 CREATE POLICY tenant_isolation ON insurance_policies
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 CREATE POLICY tenant_isolation ON payments
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 CREATE POLICY tenant_isolation ON documents
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 CREATE POLICY tenant_isolation ON claims_packets
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 CREATE POLICY tenant_isolation ON support_tickets
-  USING (tenant_ok(transporter_id)) WITH CHECK (tenant_ok(transporter_id));
+  USING (tenant_ok(company_id)) WITH CHECK (tenant_ok(company_id));
 
 -- Child tables inherit isolation through their parent FK.
 CREATE POLICY tenant_isolation ON booking_stops
@@ -108,14 +108,14 @@ CREATE POLICY tenant_isolation ON booking_stops
     is_system() OR is_super_admin() OR EXISTS (
       SELECT 1 FROM bookings b
       WHERE b.id = booking_stops.booking_id
-        AND b.transporter_id = current_company()
+        AND b.company_id = current_company()
     )
   )
   WITH CHECK (
     is_system() OR is_super_admin() OR EXISTS (
       SELECT 1 FROM bookings b
       WHERE b.id = booking_stops.booking_id
-        AND b.transporter_id = current_company()
+        AND b.company_id = current_company()
     )
   );
 
@@ -124,13 +124,13 @@ CREATE POLICY tenant_isolation ON support_messages
     is_system() OR is_super_admin() OR EXISTS (
       SELECT 1 FROM support_tickets t
       WHERE t.id = support_messages.ticket_id
-        AND t.transporter_id = current_company()
+        AND t.company_id = current_company()
     )
   )
   WITH CHECK (
     is_system() OR is_super_admin() OR EXISTS (
       SELECT 1 FROM support_tickets t
       WHERE t.id = support_messages.ticket_id
-        AND t.transporter_id = current_company()
+        AND t.company_id = current_company()
     )
   );

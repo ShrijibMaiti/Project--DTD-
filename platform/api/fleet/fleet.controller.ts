@@ -11,12 +11,12 @@ export class FleetController {
 
   @Post("trucks")
   addTruck(@Req() req: TenantRequest, @Body() dto: CreateTruckDto) {
-    return this.fleet.addTruck(req.transporterId, req.userId, dto);
+    return this.fleet.addTruck(req.companyId, req.userId, dto);
   }
 
   @Get("trucks")
   listTrucks(@Req() req: TenantRequest, @Query("status") status?: string) {
-    return this.fleet.listTrucks(req.transporterId, status);
+    return this.fleet.listTrucks(req.companyId, status);
   }
 
   @Patch("trucks/:id/status")
@@ -25,21 +25,21 @@ export class FleetController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: SetTruckStatusDto
   ) {
-    return this.fleet.setTruckStatus(req.transporterId, id, dto.status);
+    return this.fleet.setTruckStatus(req.companyId, id, dto.status);
   }
 
   @Post("drivers")
   addDriver(@Req() req: TenantRequest, @Body() dto: CreateDriverDto) {
-    return this.fleet.addDriver(req.transporterId, req.userId, dto);
+    return this.fleet.addDriver(req.companyId, req.userId, dto);
   }
 
   @Get("drivers")
   listDrivers(@Req() req: TenantRequest) {
-    return this.fleet.listDrivers(req.transporterId);
+    return this.fleet.listDrivers(req.companyId);
   }
 
   @Get("availability")
   availability(@Req() req: TenantRequest) {
-    return this.fleet.availability(req.transporterId);
+    return this.fleet.availability(req.companyId);
   }
 }

@@ -11,7 +11,7 @@ export class KycController {
 
   @Post("submit")
   submit(@Req() req: TenantRequest, @Body() dto: SubmitKycDto) {
-    return this.kyc.submit(req.transporterId, req.userId, dto);
+    return this.kyc.submit(req.companyId, req.userId, dto);
   }
 
   @Get("status/:subjectType/:subjectId")
@@ -20,7 +20,7 @@ export class KycController {
     @Param("subjectType") subjectType: string,
     @Param("subjectId", ParseUUIDPipe) subjectId: string
   ) {
-    return this.kyc.status(req.transporterId, subjectType, subjectId);
+    return this.kyc.status(req.companyId, subjectType, subjectId);
   }
 
   /** Ops review endpoint (role-guard in production). */
@@ -30,6 +30,6 @@ export class KycController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: ReviewKycDto
   ) {
-    return this.kyc.review(req.transporterId, req.userId, id, dto);
+    return this.kyc.review(req.companyId, req.userId, id, dto);
   }
 }

@@ -50,14 +50,14 @@ export class DocumentsService {
   constructor(private db: DatabaseService, private audit: AuditService) {}
 
   async generate(
-    transporterId: string,
+    companyId: string,
     userId: string,
     dto: { bookingId: string; docType: "BILTY" | "POD" | "INVOICE"; payload: Record<string, unknown> }
   ) {
-    return this.db.withTenant(transporterId, async (c) => {
+    return this.db.withTenant(companyId, async (c) => {
       const booking = await c.query(
         `SELECT b.id, b.trip_id, t.contact_phone
-         FROM bookings b JOIN transporters t ON t.id = b.company_id
+         FROM bookings b JOIN companies t ON t.id = b.company_id
          WHERE b.id=$1`,
         [dto.bookingId]
       );
@@ -68,7 +68,7 @@ export class DocumentsService {
 
       // 2. Store (encrypted at rest via bucket policy)
       const storageKey = await this.blob.put(
-        `docs/${transporterId}/${dto.bookingId}/${dto.docType}-${Date.now()}.pdf`,
+        `docs/${companyId}/${dto.bookingId}/${dto.docType}-${Date.now()}.pdf`,
         bytes
       );
 
@@ -85,7 +85,7 @@ export class DocumentsService {
         `INSERT INTO documents
            (company_id, booking_id, doc_type, storage_key, doc_hash, chain_tx, status)
          VALUES ($1,$2,$3,$4,$5,$6,'ANCHORED') RETURNING *`,
-        [transporterId, dto.bookingId, dto.docType, storageKey, docHash, txHash]
+        [companyId, dto.bookingId, dto.docType, storageKey, docHash, txHash]
       );
 
       // 6. Deliver
@@ -96,7 +96,7 @@ export class DocumentsService {
       );
 
       await this.audit.record({
-        transporterId, userId,
+        companyId, userId,
         action: "DOCUMENT_ANCHORED", entity: "document", entityId: rows[0].id,
         detail: { docType: dto.docType, docHash, txHash },
       });
@@ -104,8 +104,8 @@ export class DocumentsService {
     });
   }
 
-  async listForBooking(transporterId: string, bookingId: string) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async listForBooking(companyId: string, bookingId: string) {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `SELECT id, doc_type, doc_hash, chain_tx, status, created_at
          FROM documents WHERE booking_id=$1 ORDER BY created_at DESC`,

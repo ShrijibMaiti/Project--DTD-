@@ -9,11 +9,11 @@ export class ClaimsController {
   /** Build the evidence packet for a booking: trip + docs + custody in one bundle. */
   @Post("packet/:bookingId")
   build(@Req() req: TenantRequest, @Param("bookingId", ParseUUIDPipe) bookingId: string) {
-    return this.claims.buildPacket(req.transporterId, req.userId, bookingId);
+    return this.claims.buildPacket(req.companyId, req.userId, bookingId);
   }
 
   @Get("packet/:bookingId")
   get(@Req() req: TenantRequest, @Param("bookingId", ParseUUIDPipe) bookingId: string) {
-    return this.claims.getPacket(req.transporterId, bookingId);
+    return this.claims.getPacket(req.companyId, bookingId);
   }
 }

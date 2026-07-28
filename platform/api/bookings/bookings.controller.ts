@@ -11,17 +11,17 @@ export class BookingsController {
 
   @Post()
   create(@Req() req: TenantRequest, @Body() dto: CreateBookingDto) {
-    return this.bookings.create(req.transporterId, req.userId, dto);
+    return this.bookings.create(req.companyId, req.userId, dto);
   }
 
   @Get(":id")
   get(@Req() req: TenantRequest, @Param("id", ParseUUIDPipe) id: string) {
-    return this.bookings.get(req.transporterId, id);
+    return this.bookings.get(req.companyId, id);
   }
 
   @Get()
   list(@Req() req: TenantRequest) {
-    return this.bookings.list(req.transporterId);
+    return this.bookings.list(req.companyId);
   }
 
   @Post(":id/assign")
@@ -30,7 +30,7 @@ export class BookingsController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: AssignTruckDto
   ) {
-    return this.bookings.assignTruck(req.transporterId, req.userId, id, dto);
+    return this.bookings.assignTruck(req.companyId, req.userId, id, dto);
   }
 
   @Post(":id/cancel")
@@ -39,6 +39,6 @@ export class BookingsController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: CancelBookingDto
   ) {
-    return this.bookings.cancel(req.transporterId, req.userId, id, dto.reason);
+    return this.bookings.cancel(req.companyId, req.userId, id, dto.reason);
   }
 }

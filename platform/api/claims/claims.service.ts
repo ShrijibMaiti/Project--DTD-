@@ -16,8 +16,8 @@ import { publicClient, ADDRESSES, tripLogAbi, custodyAbi } from "@dtd/chain-sdk/
 export class ClaimsService {
   constructor(private db: DatabaseService, private audit: AuditService) {}
 
-  async buildPacket(transporterId: string, userId: string, bookingId: string) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async buildPacket(companyId: string, userId: string, bookingId: string) {
+    return this.db.withTenant(companyId, async (c) => {
       const booking = await c.query(`SELECT * FROM bookings WHERE id=$1`, [bookingId]);
       if (!booking.rows[0]) throw new NotFoundException("BOOKING_NOT_FOUND");
       const b = booking.rows[0];
@@ -98,11 +98,11 @@ export class ClaimsService {
          ON CONFLICT (booking_id) DO UPDATE
            SET packet=$3, packet_hash=$4, updated_at=now()
          RETURNING id, packet_hash, created_at`,
-        [transporterId, bookingId, packetJson, packetHash]
+        [companyId, bookingId, packetJson, packetHash]
       );
 
       await this.audit.record({
-        transporterId, userId,
+        companyId, userId,
         action: "CLAIMS_PACKET_BUILT", entity: "claims_packet", entityId: rows[0].id,
         detail: { packetHash },
       });
@@ -110,8 +110,8 @@ export class ClaimsService {
     });
   }
 
-  async getPacket(transporterId: string, bookingId: string) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async getPacket(companyId: string, bookingId: string) {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `SELECT id, packet, packet_hash, created_at, updated_at
          FROM claims_packets WHERE booking_id=$1`,

@@ -11,12 +11,12 @@ export class SupportController {
 
   @Post("tickets")
   create(@Req() req: TenantRequest, @Body() dto: CreateTicketDto) {
-    return this.support.createTicket(req.transporterId, req.userId, dto);
+    return this.support.createTicket(req.companyId, req.userId, dto);
   }
 
   @Get("tickets")
   list(@Req() req: TenantRequest) {
-    return this.support.listTickets(req.transporterId);
+    return this.support.listTickets(req.companyId);
   }
 
   @Post("tickets/:id/reply")
@@ -25,7 +25,7 @@ export class SupportController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: ReplyTicketDto
   ) {
-    return this.support.reply(req.transporterId, req.userId, id, dto.message);
+    return this.support.reply(req.companyId, req.userId, id, dto.message);
   }
 
   /**
@@ -34,6 +34,6 @@ export class SupportController {
    */
   @Post("call-driver/:bookingId")
   callDriver(@Req() req: TenantRequest, @Param("bookingId", ParseUUIDPipe) bookingId: string) {
-    return this.support.callDriver(req.transporterId, req.userId, bookingId);
+    return this.support.callDriver(req.companyId, req.userId, bookingId);
   }
 }

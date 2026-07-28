@@ -4,7 +4,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ---------------------------------------------------------------- tenants
-CREATE TABLE transporters (
+CREATE TABLE companies (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   legal_name      text NOT NULL,
   contact_phone   text NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE transporters (
 
 CREATE TABLE users (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id  uuid NOT NULL REFERENCES transporters(id),
+  company_id  uuid NOT NULL REFERENCES companies(id),
   full_name       text NOT NULL,
   phone           text NOT NULL UNIQUE,
   role            text NOT NULL DEFAULT 'MEMBER',       -- OWNER | MEMBER | OPS
@@ -24,7 +24,7 @@ CREATE TABLE users (
 -- ---------------------------------------------------------------- fleet
 CREATE TABLE trucks (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id  uuid NOT NULL REFERENCES transporters(id),
+  company_id  uuid NOT NULL REFERENCES companies(id),
   reg_number      text NOT NULL UNIQUE,
   truck_type      text NOT NULL,
   capacity_kg     integer NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE trucks (
 
 CREATE TABLE drivers (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id  uuid NOT NULL REFERENCES transporters(id),
+  company_id  uuid NOT NULL REFERENCES companies(id),
   full_name       text NOT NULL,
   phone           text NOT NULL UNIQUE,                 -- signing identity anchor
   license_number  text NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE drivers (
 -- ---------------------------------------------------------------- pricing
 CREATE TABLE price_quotes (
   id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id       uuid NOT NULL REFERENCES transporters(id),
+  company_id       uuid NOT NULL REFERENCES companies(id),
   truck_type           text NOT NULL,
   material_weight_kg   integer NOT NULL,
   distance_km          integer NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE price_quotes (
 -- ---------------------------------------------------------------- bookings
 CREATE TABLE bookings (
   id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id       uuid NOT NULL REFERENCES transporters(id),
+  company_id       uuid NOT NULL REFERENCES companies(id),
   quote_id             uuid NOT NULL REFERENCES price_quotes(id),
   truck_type           text NOT NULL,
   material_weight_kg   integer NOT NULL,
@@ -97,7 +97,7 @@ CREATE INDEX booking_stops_booking_idx ON booking_stops (booking_id, sequence);
 -- ---------------------------------------------------------------- kyc
 CREATE TABLE kyc_records (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id  uuid NOT NULL REFERENCES transporters(id),
+  company_id  uuid NOT NULL REFERENCES companies(id),
   doc_kind        text NOT NULL,
   storage_key     text NOT NULL,                         -- S3 key; PII never on-chain
   subject_type    text NOT NULL,                         -- TRANSPORTER|TRUCK|DRIVER
@@ -113,7 +113,7 @@ CREATE INDEX kyc_subject_idx ON kyc_records (subject_type, subject_id);
 -- ---------------------------------------------------------------- insurance
 CREATE TABLE insurance_policies (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id      uuid NOT NULL REFERENCES transporters(id),
+  company_id      uuid NOT NULL REFERENCES companies(id),
   booking_id          uuid NOT NULL UNIQUE REFERENCES bookings(id),
   policy_number       text NOT NULL,
   declared_value_inr  integer NOT NULL CHECK (declared_value_inr <= 5000000),
@@ -125,7 +125,7 @@ CREATE TABLE insurance_policies (
 -- ---------------------------------------------------------------- payments
 CREATE TABLE payments (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id    uuid NOT NULL REFERENCES transporters(id),
+  company_id    uuid NOT NULL REFERENCES companies(id),
   booking_id        uuid NOT NULL REFERENCES bookings(id),
   amount_inr        integer NOT NULL,
   method            text NOT NULL,                       -- UPI|NEFT|IMPS|NETBANKING
@@ -141,7 +141,7 @@ CREATE INDEX payments_booking_idx ON payments (booking_id);
 -- ---------------------------------------------------------------- documents
 CREATE TABLE documents (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id  uuid NOT NULL REFERENCES transporters(id),
+  company_id  uuid NOT NULL REFERENCES companies(id),
   booking_id      uuid NOT NULL REFERENCES bookings(id),
   doc_type        text NOT NULL,                         -- BILTY|POD|INVOICE|MANIFEST
   storage_key     text NOT NULL,
@@ -155,7 +155,7 @@ CREATE INDEX documents_booking_idx ON documents (booking_id);
 -- ---------------------------------------------------------------- claims
 CREATE TABLE claims_packets (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id  uuid NOT NULL REFERENCES transporters(id),
+  company_id  uuid NOT NULL REFERENCES companies(id),
   booking_id      uuid NOT NULL UNIQUE REFERENCES bookings(id),
   packet          jsonb NOT NULL,
   packet_hash     text NOT NULL,
@@ -166,7 +166,7 @@ CREATE TABLE claims_packets (
 -- ---------------------------------------------------------------- support
 CREATE TABLE support_tickets (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  transporter_id  uuid NOT NULL REFERENCES transporters(id),
+  company_id  uuid NOT NULL REFERENCES companies(id),
   booking_id      uuid REFERENCES bookings(id),
   category        text NOT NULL,
   subject         text NOT NULL,
@@ -186,7 +186,7 @@ CREATE TABLE support_messages (
 -- ---------------------------------------------------------------- audit (append-only)
 CREATE TABLE audit_log (
   id              bigserial PRIMARY KEY,
-  transporter_id  uuid,
+  company_id  uuid,
   user_id         uuid,
   action          text NOT NULL,
   entity          text NOT NULL,

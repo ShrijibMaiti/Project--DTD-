@@ -10,7 +10,7 @@ export class PricingController {
   /** Instant estimate: returns a price RANGE + a quote id (valid 30 min). */
   @Post("estimate")
   estimate(@Req() req: TenantRequest, @Body() dto: EstimateDto) {
-    return this.pricing.estimate(req.transporterId, dto);
+    return this.pricing.estimate(req.companyId, dto);
   }
 
   /** Ops confirms the exact market price within the 30-minute window. */
@@ -20,6 +20,6 @@ export class PricingController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body("finalPriceInr") finalPriceInr: number
   ) {
-    return this.pricing.confirmMarketPrice(req.transporterId, id, finalPriceInr);
+    return this.pricing.confirmMarketPrice(req.companyId, id, finalPriceInr);
   }
 }

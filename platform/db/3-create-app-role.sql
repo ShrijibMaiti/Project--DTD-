@@ -1,4 +1,4 @@
-﻿DO $$
+DO $$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'dtd_app') THEN
     CREATE ROLE dtd_app LOGIN PASSWORD 'dtd_app_pw' NOSUPERUSER NOBYPASSRLS;

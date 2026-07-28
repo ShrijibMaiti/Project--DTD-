@@ -6,7 +6,7 @@ export class AuditService {
   constructor(private db: DatabaseService) {}
 
   async record(params: {
-    transporterId: string;
+    companyId: string;
     userId: string | null;
     action: string;
     entity: string;
@@ -18,7 +18,7 @@ export class AuditService {
         `INSERT INTO audit_log (company_id, user_id, action, entity, entity_id, detail)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [
-          params.transporterId,
+          params.companyId,
           params.userId,
           params.action,
           params.entity,

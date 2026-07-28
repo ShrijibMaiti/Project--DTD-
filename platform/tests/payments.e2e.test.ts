@@ -21,7 +21,7 @@ import {
 describe("Payments E2E", () => {
   let app: INestApplication;
   let token: string;
-  let transporterId: string;
+  let companyId: string;
   let bookingId: string;
   let orderId: string;
 
@@ -43,9 +43,9 @@ describe("Payments E2E", () => {
     await app.init();
 
     const t = await seedTenant("Sharma Logistics");
-    transporterId = t.transporterId;
-    token = signTestJwt(t.userId, t.transporterId);
-    bookingId = await seedBooking(t.transporterId);
+    companyId = t.companyId;
+    token = signTestJwt(t.userId, t.companyId);
+    bookingId = await seedBooking(t.companyId);
   });
 
   afterAll(async () => app.close());
@@ -125,7 +125,7 @@ describe("Payments E2E", () => {
   it("THE MONEY GATE: payout stays HELD when chain says Short (175/200)", async () => {
     mockChainIsReleasable(false); // CustodyManifest.isReleasable() -> false
 
-    const body = { manifestId: "0x" + "ab".repeat(32), bookingId, transporterId };
+    const body = { manifestId: "0x" + "ab".repeat(32), bookingId, companyId };
     await request(app.getHttpServer())
       .post("/payments/webhook/release-gate")
       .set("x-dtd-internal-signature", internalSig(body))
@@ -141,7 +141,7 @@ describe("Payments E2E", () => {
   it("releases payout when chain confirms full scan match (200/200)", async () => {
     mockChainIsReleasable(true);
 
-    const body = { manifestId: "0x" + "ab".repeat(32), bookingId, transporterId };
+    const body = { manifestId: "0x" + "ab".repeat(32), bookingId, companyId };
     await request(app.getHttpServer())
       .post("/payments/webhook/release-gate")
       .set("x-dtd-internal-signature", internalSig(body))
@@ -155,7 +155,7 @@ describe("Payments E2E", () => {
   });
 
   it("rejects a release-gate call with a forged internal signature", async () => {
-    const body = { manifestId: "0x" + "cd".repeat(32), bookingId, transporterId };
+    const body = { manifestId: "0x" + "cd".repeat(32), bookingId, companyId };
     await request(app.getHttpServer())
       .post("/payments/webhook/release-gate")
       .set("x-dtd-internal-signature", "f00d".repeat(16))

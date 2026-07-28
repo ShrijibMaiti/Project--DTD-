@@ -6,9 +6,9 @@
  * which additionally enforces roles and module entitlements. Until every
  * controller carries its decorators, this reads the same Domain 7 token shape
  * ({sub, companyId, role, modules}) and exposes the company id under the
- * legacy `transporterId` name so the 11 existing service files keep working.
+ * legacy `companyId` name so the 11 existing service files keep working.
  *
- * The claim is `companyId`; the property is `transporterId`; they hold the
+ * The claim is `companyId`; the property is `companyId`; they hold the
  * SAME uuid. Migration B renames the columns and this ambiguity disappears.
  */
 import { Injectable, NestMiddleware, UnauthorizedException } from "@nestjs/common";
@@ -18,7 +18,7 @@ import type { Role } from "@dtd/shared/roles.schema";
 import type { PlatformModule } from "@dtd/shared/modules.schema";
 
 export interface TenantRequest extends Request {
-  transporterId: string;
+  companyId: string;
   userId: string;
   role: Role;
   modules: PlatformModule[];
@@ -50,7 +50,7 @@ export class TenantMiddleware implements NestMiddleware {
     }
 
     req.userId = payload.sub;
-    req.transporterId = payload.companyId!;
+    req.companyId = payload.companyId!;
     req.role = payload.role;
     req.modules = payload.modules ?? [];
     next();

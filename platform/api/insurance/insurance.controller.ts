@@ -9,16 +9,16 @@ export class InsuranceController {
 
   @Post("quote")
   quote(@Req() req: TenantRequest, @Body() dto: BuyPolicyDto) {
-    return this.insurance.quote(req.transporterId, dto);
+    return this.insurance.quote(req.companyId, dto);
   }
 
   @Post("buy")
   buy(@Req() req: TenantRequest, @Body() dto: BuyPolicyDto) {
-    return this.insurance.buy(req.transporterId, req.userId, dto);
+    return this.insurance.buy(req.companyId, req.userId, dto);
   }
 
   @Get("policies/:bookingId")
   policy(@Req() req: TenantRequest, @Param("bookingId", ParseUUIDPipe) bookingId: string) {
-    return this.insurance.getPolicy(req.transporterId, bookingId);
+    return this.insurance.getPolicy(req.companyId, bookingId);
   }
 }

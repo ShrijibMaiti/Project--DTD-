@@ -10,11 +10,11 @@ export class DocumentsController {
   /** Generate -> store -> hash -> anchor on-chain -> WhatsApp the link. */
   @Post("generate")
   generate(@Req() req: TenantRequest, @Body() dto: GenerateDocumentDto) {
-    return this.documents.generate(req.transporterId, req.userId, dto);
+    return this.documents.generate(req.companyId, req.userId, dto);
   }
 
   @Get("booking/:bookingId")
   list(@Req() req: TenantRequest, @Param("bookingId", ParseUUIDPipe) bookingId: string) {
-    return this.documents.listForBooking(req.transporterId, bookingId);
+    return this.documents.listForBooking(req.companyId, bookingId);
   }
 }

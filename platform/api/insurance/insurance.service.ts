@@ -30,13 +30,13 @@ export class InsuranceService {
 
   constructor(private db: DatabaseService, private audit: AuditService) {}
 
-  async quote(transporterId: string, dto: BuyPolicyDto) {
+  async quote(companyId: string, dto: BuyPolicyDto) {
     const premiumInr = Math.max(299, Math.round(dto.declaredValueInr * 0.0009));
     return { bookingId: dto.bookingId, declaredValueInr: dto.declaredValueInr, premiumInr };
   }
 
-  async buy(transporterId: string, userId: string, dto: BuyPolicyDto) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async buy(companyId: string, userId: string, dto: BuyPolicyDto) {
+    return this.db.withTenant(companyId, async (c) => {
       const booking = await c.query(
         `SELECT id, status FROM bookings WHERE id=$1`, [dto.bookingId]
       );
@@ -59,10 +59,10 @@ export class InsuranceService {
         `INSERT INTO insurance_policies
            (company_id, booking_id, policy_number, declared_value_inr, premium_inr, status)
          VALUES ($1,$2,$3,$4,$5,'ACTIVE') RETURNING *`,
-        [transporterId, dto.bookingId, policy.policyNumber, dto.declaredValueInr, policy.premiumInr]
+        [companyId, dto.bookingId, policy.policyNumber, dto.declaredValueInr, policy.premiumInr]
       );
       await this.audit.record({
-        transporterId, userId,
+        companyId, userId,
         action: "POLICY_PURCHASED", entity: "insurance_policy", entityId: rows[0].id,
         detail: { policyNumber: policy.policyNumber },
       });
@@ -70,8 +70,8 @@ export class InsuranceService {
     });
   }
 
-  async getPolicy(transporterId: string, bookingId: string) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async getPolicy(companyId: string, bookingId: string) {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `SELECT * FROM insurance_policies WHERE booking_id=$1`, [bookingId]
       );

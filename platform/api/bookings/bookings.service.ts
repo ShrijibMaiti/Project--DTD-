@@ -20,8 +20,8 @@ export class BookingsService {
     private pricing: PricingService
   ) {}
 
-  async create(transporterId: string, userId: string, dto: CreateBookingDto) {
-    const quote = await this.pricing.getQuote(transporterId, dto.quoteId);
+  async create(companyId: string, userId: string, dto: CreateBookingDto) {
+    const quote = await this.pricing.getQuote(companyId, dto.quoteId);
     if (!quote) throw new BadRequestException("QUOTE_NOT_FOUND_OR_EXPIRED");
 
     const pickups = dto.stops.filter((s) => s.kind === "PICKUP").length;
@@ -33,7 +33,7 @@ export class BookingsService {
       throw new BadRequestException("SCHEDULED_AT_MUST_BE_FUTURE");
     }
 
-    return this.db.withTenant(transporterId, async (c) => {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `INSERT INTO bookings
            (company_id, quote_id, truck_type, material_weight_kg,
@@ -41,7 +41,7 @@ export class BookingsService {
          VALUES ($1,$2,$3,$4,$5,'CONFIRMED',$6,$7,$8)
          RETURNING *`,
         [
-          transporterId, dto.quoteId, dto.truckType, dto.materialWeightKg,
+          companyId, dto.quoteId, dto.truckType, dto.materialWeightKg,
           dto.scheduledAt, quote.estimated_price_inr, dto.notes ?? null, userId,
         ]
       );
@@ -56,23 +56,23 @@ export class BookingsService {
       }
 
       await this.audit.record({
-        transporterId, userId,
+        companyId, userId,
         action: "BOOKING_CREATED", entity: "booking", entityId: booking.id,
       });
       return this.hydrate(c, booking);
     });
   }
 
-  async get(transporterId: string, id: string) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async get(companyId: string, id: string) {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(`SELECT * FROM bookings WHERE id = $1`, [id]);
       if (!rows[0]) throw new NotFoundException();
       return this.hydrate(c, rows[0]);
     });
   }
 
-  async list(transporterId: string) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async list(companyId: string) {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `SELECT * FROM bookings ORDER BY created_at DESC LIMIT 100`
       );
@@ -81,9 +81,9 @@ export class BookingsService {
   }
 
   async assignTruck(
-    transporterId: string, userId: string, id: string, dto: AssignTruckDto
+    companyId: string, userId: string, id: string, dto: AssignTruckDto
   ) {
-    return this.db.withTenant(transporterId, async (c) => {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `SELECT status FROM bookings WHERE id = $1 FOR UPDATE`, [id]
       );
@@ -112,7 +112,7 @@ export class BookingsService {
       );
 
       await this.audit.record({
-        transporterId, userId,
+        companyId, userId,
         action: "BOOKING_ASSIGNED", entity: "booking", entityId: id,
         detail: { truckId: dto.truckId, driverId: dto.driverId },
       });
@@ -122,8 +122,8 @@ export class BookingsService {
   }
 
   /** Free cancellation only before the truck reaches pickup (i.e. pre-transit). */
-  async cancel(transporterId: string, userId: string, id: string, reason?: string) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async cancel(companyId: string, userId: string, id: string, reason?: string) {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `SELECT status, truck_id FROM bookings WHERE id=$1 FOR UPDATE`, [id]
       );
@@ -142,7 +142,7 @@ export class BookingsService {
       }
 
       await this.audit.record({
-        transporterId, userId,
+        companyId, userId,
         action: "BOOKING_CANCELLED", entity: "booking", entityId: id,
         detail: { reason },
       });
@@ -151,8 +151,8 @@ export class BookingsService {
   }
 
   /** Called by Domain 3 event handlers, not by HTTP. */
-  async markStatus(transporterId: string, id: string, status: "IN_TRANSIT" | "DELIVERED") {
-    await this.db.withTenant(transporterId, (c) =>
+  async markStatus(companyId: string, id: string, status: "IN_TRANSIT" | "DELIVERED") {
+    await this.db.withTenant(companyId, (c) =>
       c.query(`UPDATE bookings SET status=$2 WHERE id=$1`, [id, status])
     );
   }

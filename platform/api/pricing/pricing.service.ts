@@ -18,7 +18,7 @@ const QUOTE_TTL_MINUTES = 30;
 export class PricingService {
   constructor(private db: DatabaseService) {}
 
-  async estimate(transporterId: string, dto: EstimateDto) {
+  async estimate(companyId: string, dto: EstimateDto) {
     const rate = RATE_PER_KM[dto.truckType];
     if (!rate) throw new BadRequestException("UNKNOWN_TRUCK_TYPE");
 
@@ -32,7 +32,7 @@ export class PricingService {
     const low = Math.round(base * 0.9);
     const high = Math.round(base * 1.15);
 
-    return this.db.withTenant(transporterId, async (c) => {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `INSERT INTO price_quotes
            (company_id, truck_type, material_weight_kg, distance_km,
@@ -40,7 +40,7 @@ export class PricingService {
          VALUES ($1,$2,$3,$4,$5,$6,$7, now() + interval '${QUOTE_TTL_MINUTES} minutes')
          RETURNING id, estimated_price_inr, range_low_inr, range_high_inr, expires_at`,
         [
-          transporterId, dto.truckType, dto.materialWeightKg,
+          companyId, dto.truckType, dto.materialWeightKg,
           Math.round(roadKm), estimated, low, high,
         ]
       );
@@ -48,11 +48,11 @@ export class PricingService {
     });
   }
 
-  async confirmMarketPrice(transporterId: string, quoteId: string, finalPriceInr: number) {
+  async confirmMarketPrice(companyId: string, quoteId: string, finalPriceInr: number) {
     if (!finalPriceInr || finalPriceInr <= 0) {
       throw new BadRequestException("INVALID_PRICE");
     }
-    return this.db.withTenant(transporterId, async (c) => {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `UPDATE price_quotes SET final_price_inr=$2, confirmed_at=now()
          WHERE id=$1 AND expires_at > now()
@@ -64,8 +64,8 @@ export class PricingService {
     });
   }
 
-  async getQuote(transporterId: string, quoteId: string) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async getQuote(companyId: string, quoteId: string) {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(
         `SELECT * FROM price_quotes WHERE id=$1 AND expires_at > now()`, [quoteId]
       );

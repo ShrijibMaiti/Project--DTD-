@@ -10,8 +10,8 @@ import { signTestJwt, seedTenant, seedTruckAndDriver, resetDb } from "./helpers"
 
 describe("Bookings E2E", () => {
   let app: INestApplication;
-  let tokenA: string; // transporter A
-  let tokenB: string; // transporter B (isolation check)
+  let tokenA: string; // company A
+  let tokenB: string; // company B (isolation check)
   let quoteId: string;
 
   beforeAll(async () => {
@@ -23,9 +23,9 @@ describe("Bookings E2E", () => {
 
     const a = await seedTenant("Sharma Logistics");
     const b = await seedTenant("Verma Transport");
-    tokenA = signTestJwt(a.userId, a.transporterId);
-    tokenB = signTestJwt(b.userId, b.transporterId);
-    await seedTruckAndDriver(a.transporterId);
+    tokenA = signTestJwt(a.userId, a.companyId);
+    tokenB = signTestJwt(b.userId, b.companyId);
+    await seedTruckAndDriver(a.companyId);
   });
 
   afterAll(async () => app.close());
@@ -106,7 +106,7 @@ describe("Bookings E2E", () => {
     expect(res.body.status).toBe("ASSIGNED");
   });
 
-  it("TENANT ISOLATION: transporter B cannot see transporter A's booking", async () => {
+  it("TENANT ISOLATION: company B cannot see company A's booking", async () => {
     await request(app.getHttpServer())
       .get(`/bookings/${(global as any).bookingId}`)
       .set("Authorization", `Bearer ${tokenB}`)

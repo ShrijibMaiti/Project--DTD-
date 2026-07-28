@@ -13,12 +13,12 @@ export class PaymentsController {
   /** Payment is due when the vehicle reaches the loading point. */
   @Post("collect")
   collect(@Req() req: TenantRequest, @Body() dto: CreateCollectionDto) {
-    return this.payments.createCollection(req.transporterId, req.userId, dto);
+    return this.payments.createCollection(req.companyId, req.userId, dto);
   }
 
   @Get(":bookingId")
   get(@Req() req: TenantRequest, @Param("bookingId", ParseUUIDPipe) bookingId: string) {
-    return this.payments.getByBooking(req.transporterId, bookingId);
+    return this.payments.getByBooking(req.companyId, bookingId);
   }
 
   /** Gateway webhook — authenticated by HMAC signature, NOT bearer token. */
@@ -41,7 +41,7 @@ export class PaymentsController {
   @UsePipes(new ValidationPipe({ whitelist: false, forbidNonWhitelisted: false, transform: false }))
   releaseGate(
     @Headers("x-dtd-internal-signature") signature: string,
-    @Body() body: { manifestId: string; bookingId: string; transporterId: string }
+    @Body() body: { manifestId: string; bookingId: string; companyId: string }
   ) {
     return this.payments.handleReleaseGate(signature, body);
   }

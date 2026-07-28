@@ -12,8 +12,8 @@ import type { Hex } from "viem";
 export class PaymentsService {
   constructor(private db: DatabaseService, private audit: AuditService) {}
 
-  async createCollection(transporterId: string, userId: string, dto: CreateCollectionDto) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async createCollection(companyId: string, userId: string, dto: CreateCollectionDto) {
+    return this.db.withTenant(companyId, async (c) => {
       const booking = await c.query(`SELECT id, status FROM bookings WHERE id=$1`, [dto.bookingId]);
       if (!booking.rows[0]) throw new NotFoundException("BOOKING_NOT_FOUND");
 
@@ -30,10 +30,10 @@ export class PaymentsService {
         `INSERT INTO payments
            (company_id, booking_id, amount_inr, method, status, gateway_order_id)
          VALUES ($1,$2,$3,$4,'PENDING',$5) RETURNING *`,
-        [transporterId, dto.bookingId, dto.amountInr, dto.method, gatewayOrderId]
+        [companyId, dto.bookingId, dto.amountInr, dto.method, gatewayOrderId]
       );
       await this.audit.record({
-        transporterId, userId,
+        companyId, userId,
         action: "COLLECTION_CREATED", entity: "payment", entityId: rows[0].id,
         detail: { amountInr: dto.amountInr, method: dto.method },
       });
@@ -41,8 +41,8 @@ export class PaymentsService {
     });
   }
 
-  async getByBooking(transporterId: string, bookingId: string) {
-    return this.db.withTenant(transporterId, async (c) => {
+  async getByBooking(companyId: string, bookingId: string) {
+    return this.db.withTenant(companyId, async (c) => {
       const { rows } = await c.query(`SELECT * FROM payments WHERE booking_id=$1`, [bookingId]);
       if (!rows[0]) throw new NotFoundException();
       return rows[0];
@@ -96,7 +96,7 @@ export class PaymentsService {
    */
   async handleReleaseGate(
     signature: string,
-    body: { manifestId: string; bookingId: string; transporterId: string }
+    body: { manifestId: string; bookingId: string; companyId: string }
   ) {
     const expected = createHmac("sha256", process.env.DTD_INTERNAL_WEBHOOK_SECRET!)
       .update(JSON.stringify(body))
@@ -120,7 +120,7 @@ export class PaymentsService {
       );
     });
     await this.audit.record({
-      transporterId: body.transporterId, userId: null,
+      companyId: body.companyId, userId: null,
       action: "PAYOUT_RELEASED", entity: "payment", entityId: body.bookingId,
       detail: { manifestId: body.manifestId },
     });
