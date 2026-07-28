@@ -1,0 +1,16 @@
+{
+  "name": "project-dtd",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Project DTD — modular TMS with a decentralized trust layer",
+  "workspaces": [
+    "platform",
+    "chain",
+    "custody",
+    "gps",
+    "apps",
+    "infra",
+    "identity",
+    "shared"
+  ]
+}
