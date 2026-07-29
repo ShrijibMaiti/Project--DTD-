@@ -1,6 +1,8 @@
-import { Module, MiddlewareConsumer, NestModule, RequestMethod } from "@nestjs/common";
+import { Module } from "@nestjs/common";
+import { APP_GUARD, Reflector } from "@nestjs/core";
 import { CommonModule } from "./common/common.module";
-import { TenantMiddleware } from "./common/tenant.middleware";
+import { RbacModule } from "@dtd/identity/rbac/rbac.module";
+import { DtdAuthGuard } from "@dtd/identity/rbac/guards";
 import { BookingsModule } from "./bookings/bookings.module";
 import { PricingModule } from "./pricing/pricing.module";
 import { FleetModule } from "./fleet/fleet.module";
@@ -11,9 +13,20 @@ import { DocumentsModule } from "./documents/documents.module";
 import { ClaimsModule } from "./claims/claims.module";
 import { SupportModule } from "./support/support.module";
 
+/**
+ * DtdAuthGuard is registered GLOBALLY, not as middleware.
+ *
+ * This is the important design choice: a global guard means every route is
+ * protected BY DEFAULT and an unguarded endpoint requires an explicit
+ * @Public() decorator. The previous middleware approach failed open — forget
+ * to apply it and the route was wide open. This fails closed.
+ *
+ * TenantMiddleware is gone entirely; the guard sets req.actor instead.
+ */
 @Module({
   imports: [
     CommonModule,
+    RbacModule,
     BookingsModule,
     PricingModule,
     FleetModule,
@@ -24,12 +37,9 @@ import { SupportModule } from "./support/support.module";
     ClaimsModule,
     SupportModule,
   ],
+  providers: [
+    Reflector,
+    { provide: APP_GUARD, useClass: DtdAuthGuard },
+  ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .exclude({ path: "payments/webhook/(.*)", method: RequestMethod.ALL })
-      .forRoutes("*");
-  }
-}
+export class AppModule {}

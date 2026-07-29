@@ -16,5 +16,21 @@
       "@dtd/shared/*": ["../shared/*"],
       "@dtd/identity/*": ["../identity/*"]
     }
-  }
+  },
+  "include": [
+    "api/**/*.ts",
+    "tests/**/*.ts",
+    "../identity/auth/**/*.ts",
+    "../identity/rbac/**/*.ts",
+    "../identity/companies/**/*.ts",
+    "../identity/subscriptions/**/*.ts",
+    "../shared/**/*.ts",
+    "../chain/sdk/**/*.ts"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "../identity/tests/**",
+    "../custody/**",
+    "../gps/**"
+  ]
 }

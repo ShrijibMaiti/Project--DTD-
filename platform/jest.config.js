@@ -3,6 +3,10 @@
   testEnvironment: "node",
   rootDir: ".",
   moduleNameMapper: {
+    "^@nestjs/core$": "<rootDir>/node_modules/@nestjs/core",
+    "^@nestjs/core/(.*)$": "<rootDir>/node_modules/@nestjs/core/$1",
+    "^@nestjs/common$": "<rootDir>/node_modules/@nestjs/common",
+    "^@nestjs/common/(.*)$": "<rootDir>/node_modules/@nestjs/common/$1",
     "^@dtd/chain-sdk/(.*)$": "<rootDir>/../chain/sdk/$1",
     "^@dtd/shared/(.*)$": "<rootDir>/../shared/$1",
     "^@dtd/identity/(.*)$": "<rootDir>/../identity/$1",

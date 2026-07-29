@@ -107,6 +107,10 @@ export class DtdAuthGuard implements CanActivate {
       throw err;
     }
 
+    // Legacy shim: platform controllers read req.companyId / req.userId.
+    // Remove once every controller uses @CurrentActor().
+    req.companyId = actor.companyId;
+    req.userId = actor.userId;
     return true;
   }
 }
