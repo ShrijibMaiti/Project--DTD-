@@ -14,7 +14,8 @@
     "paths": {
       "@dtd/chain-sdk/*": ["../chain/sdk/*"],
       "@dtd/shared/*": ["../shared/*"],
-      "@dtd/identity/*": ["../identity/*"]
+      "@dtd/identity/*": ["../identity/*"],
+      "@dtd/custody/*": ["../custody/*"]
     }
   },
   "include": [
@@ -25,12 +26,16 @@
     "../identity/companies/**/*.ts",
     "../identity/subscriptions/**/*.ts",
     "../shared/**/*.ts",
-    "../chain/sdk/**/*.ts"
+    "../chain/sdk/**/*.ts",
+    "../custody/manifest/builder.ts",
+    "../custody/manifest/handoff.ts",
+    "../custody/doublescan/lifecycle-index.ts",
+    "../custody/db/**/*.ts",
+    "../custody/qr/generator.ts"
   ],
   "exclude": [
     "**/node_modules",
     "../identity/tests/**",
-    "../custody/**",
     "../gps/**"
   ]
 }

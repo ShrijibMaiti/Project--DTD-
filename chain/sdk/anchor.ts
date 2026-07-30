@@ -56,6 +56,7 @@ export const custodyAbi = parseAbi([
   "function deliveryDigest(bytes32 manifestId, uint32 deliveredCount) view returns (bytes32)",
   "function isReleasable(bytes32 manifestId) view returns (bool)",
   "function status(bytes32 manifestId) view returns (uint8)",
+  "function getManifest(bytes32 manifestId) view returns ((bytes32 tripId, bytes32 manifestHash, uint32 pieceCount, uint32 deliveredCount, address loader, address driver, address receiver, bool loaderSigned, bool driverSigned, bool receiverSigned, uint64 createdAt, uint64 custodyStartAt, uint64 deliveredAt, uint8 status))",
 ]);
 
 export const reputationAbi = parseAbi([
