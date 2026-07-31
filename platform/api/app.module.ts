@@ -13,6 +13,7 @@ import { DocumentsModule } from "./documents/documents.module";
 import { ClaimsModule } from "./claims/claims.module";
 import { SupportModule } from "./support/support.module";
 import { CustodyModule } from "./custody/custody.module";
+import { GpsModule } from "./gps/gps.module";
 
 /**
  * DtdAuthGuard is registered GLOBALLY, not as middleware.
@@ -38,6 +39,7 @@ import { CustodyModule } from "./custody/custody.module";
     ClaimsModule,
     SupportModule,
     CustodyModule,
+    GpsModule,
   ],
   providers: [
     Reflector,

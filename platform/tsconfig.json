@@ -16,6 +16,7 @@
       "@dtd/shared/*": ["../shared/*"],
       "@dtd/identity/*": ["../identity/*"],
       "@dtd/custody/*": ["../custody/*"]
+      ,"@dtd/gps/*": ["../gps/*"]
     }
   },
   "include": [
@@ -31,11 +32,19 @@
     "../custody/manifest/handoff.ts",
     "../custody/doublescan/lifecycle-index.ts",
     "../custody/db/**/*.ts",
-    "../custody/qr/generator.ts"
+    "../custody/qr/generator.ts",
+    "../gps/ingest/**/*.ts",
+    "../gps/journey/**/*.ts",
+    "../gps/query/**/*.ts",
+    "../gps/db/**/*.ts",
+    "../gps/batching/**/*.ts",
+    "../gps/signing/**/*.ts"
+
   ],
   "exclude": [
     "**/node_modules",
     "../identity/tests/**",
-    "../gps/**"
+    "../gps/tests/**",
+    "../gps/workers/**"
   ]
 }

@@ -11,6 +11,7 @@
     "^@dtd/shared/(.*)$": "<rootDir>/../shared/$1",
     "^@dtd/identity/(.*)$": "<rootDir>/../identity/$1",
     "^@dtd/custody/(.*)$": "<rootDir>/../custody/$1",
+    "^@dtd/gps/(.*)$": "<rootDir>/../gps/$1",
   },
   testRegex: ".*\\.e2e\\.test\\.ts$",
   setupFiles: ["<rootDir>/tests/jest.setup.ts"],
