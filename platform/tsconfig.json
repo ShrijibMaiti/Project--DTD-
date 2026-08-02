@@ -1,6 +1,7 @@
 ﻿{
   "compilerOptions": {
     "target": "ES2021",
+    "lib": ["ES2022"],
     "module": "commonjs",
     "moduleResolution": "node",
     "experimentalDecorators": true,
@@ -12,11 +13,14 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
+      "ox": ["../node_modules/ox/_types/index.d.ts"],
+      "ox/*": ["../node_modules/ox/_types/*"],
       "@dtd/chain-sdk/*": ["../chain/sdk/*"],
+      "@dtd/chain/*": ["../chain/*"],
       "@dtd/shared/*": ["../shared/*"],
       "@dtd/identity/*": ["../identity/*"],
-      "@dtd/custody/*": ["../custody/*"]
-      ,"@dtd/gps/*": ["../gps/*"]
+      "@dtd/custody/*": ["../custody/*"],
+      "@dtd/gps/*": ["../gps/*"]
     }
   },
   "include": [
@@ -28,9 +32,11 @@
     "../identity/subscriptions/**/*.ts",
     "../shared/**/*.ts",
     "../chain/sdk/**/*.ts",
+    "../chain/keys/**/*.ts",
     "../custody/manifest/builder.ts",
     "../custody/manifest/handoff.ts",
     "../custody/doublescan/lifecycle-index.ts",
+    "../custody/reconcile/**/*.ts",
     "../custody/db/**/*.ts",
     "../custody/qr/generator.ts",
     "../gps/ingest/**/*.ts",
@@ -39,7 +45,6 @@
     "../gps/db/**/*.ts",
     "../gps/batching/**/*.ts",
     "../gps/signing/**/*.ts"
-
   ],
   "exclude": [
     "**/node_modules",

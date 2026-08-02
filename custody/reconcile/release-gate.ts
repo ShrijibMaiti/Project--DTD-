@@ -17,7 +17,7 @@ import type { Hex } from "viem";
 import { CustodyStatus } from "@dtd/shared/manifest.schema";
 import { confirmDelivery, getDeliveryDigest } from "@dtd/chain-sdk/anchor";
 import { isReleasable } from "@dtd/chain-sdk/verify";
-import type { SignerService } from "@dtd/chain-sdk/keys/signer-service";
+import type { SignerService } from "@dtd/chain/keys/signer-service";
 import type { ReconcileCounter, ReconcileResult } from "./counter";
 import type { HandoffService, AlertSink } from "../manifest/handoff";
 import type { ManifestStore } from "../manifest/builder";

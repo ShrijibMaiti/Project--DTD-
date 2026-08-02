@@ -21,12 +21,24 @@ export const ROLES_KEY = "dtd:roles";
 export const PERMISSION_KEY = "dtd:permission";
 export const MODULE_KEY = "dtd:module";
 export const PUBLIC_KEY = "dtd:public";
+export const ANY_PERMISSION_KEY = "dtd:any_permission";
 
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
 export const RequiresPermission = (p: Permission) => SetMetadata(PERMISSION_KEY, p);
 export const RequiresModule = (m: PlatformModule) => SetMetadata(MODULE_KEY, m);
 /** Webhooks and the public verify page. Must be explicit — never inferred. */
 export const Public = () => SetMetadata(PUBLIC_KEY, true);
+
+/**
+ * Passes if the actor holds ANY ONE of the listed permissions.
+ *
+ * Use only where one resource is legitimately reachable by roles with
+ * different permission sets. Do NOT use it to paper over a route that should
+ * have been split — if the two callers are doing different things, they want
+ * different routes. See custody scans (split) vs custody reconcile (shared).
+ */
+export const RequiresAnyPermission = (...ps: Permission[]) =>
+  SetMetadata(ANY_PERMISSION_KEY, ps);
 
 export interface DtdRequest extends Request {
   actor: Actor;
@@ -79,6 +91,10 @@ export class DtdAuthGuard implements CanActivate {
     const requiredPermission = this.reflector.getAllAndOverride<Permission>(
       PERMISSION_KEY, [handler, cls]
     );
+    const anyPermission = this.reflector.getAllAndOverride<Permission[]>(
+      ANY_PERMISSION_KEY,
+      [handler, cls],
+    );
     const allowedRoles = this.reflector.getAllAndOverride<Role[]>(
       ROLES_KEY, [handler, cls]
     );
@@ -90,6 +106,13 @@ export class DtdAuthGuard implements CanActivate {
         throw new ForbiddenError(`role ${actor.role} not in [${allowedRoles.join(", ")}]`);
       }
       if (requiredPermission) this.permissions.assert(actor, requiredPermission);
+
+      if (anyPermission?.length &&
+          !anyPermission.some((p) => this.permissions.can(actor, p))) {
+        throw new ForbiddenError(
+          `${actor.role} holds none of [${anyPermission.join(", ")}]`
+        );
+      }
     } catch (err) {
       if (err instanceof PaymentRequiredError) {
         throw new HttpException(

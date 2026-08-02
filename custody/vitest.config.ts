@@ -6,6 +6,7 @@ export default defineConfig({
     alias: {
       "@dtd/shared": path.resolve(__dirname, "../shared"),
       "@dtd/chain-sdk": path.resolve(__dirname, "../chain/sdk"),
+      "@dtd/chain": path.resolve(__dirname, "../chain"),
     },
   },
   test: {

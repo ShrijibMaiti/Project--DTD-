@@ -16,7 +16,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 import type { Hex } from "viem";
 import { getLoadingDigest, submitSignature } from "@dtd/chain-sdk/anchor";
-import type { SignerService } from "@dtd/chain-sdk/keys/signer-service";
+import type { SignerService } from "@dtd/chain/keys/signer-service";
 import type { ManifestStore } from "./builder";
 
 export type CosignRole = "loader" | "driver";
