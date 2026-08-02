@@ -1,6 +1,7 @@
 import {
   BadRequestException, Injectable, NotFoundException,
 } from "@nestjs/common";
+import type { PoolClient } from "pg";
 import { DatabaseService } from "../common/database.service";
 import { AuditService } from "../common/audit.service";
 import { PricingService } from "../pricing/pricing.service";
@@ -9,8 +10,15 @@ import { CreateBookingDto, AssignTruckDto } from "./bookings.dto";
 /**
  * Lifecycle: QUOTED -> CONFIRMED -> ASSIGNED -> IN_TRANSIT -> DELIVERED
  *                                 \-> CANCELLED (free before truck at pickup)
- * IN_TRANSIT / DELIVERED transitions are driven by Domain 3 custody events,
- * not by this API — bookings only reflect them.
+ *
+ * IN_TRANSIT / DELIVERED transitions are driven by custody events via
+ * OrchestrationService — bookings only reflect them. Note this service does
+ * NOT import CustodyService: the dependency runs one way only, orchestration
+ * -> domains, which is what keeps the module graph acyclic.
+ *
+ * PHASE B: assignTruck() and markStatus() accept an optional PoolClient so
+ * they can participate in an orchestrated transaction rather than opening
+ * their own. Existing callers pass nothing and behave exactly as before.
  */
 @Injectable()
 export class BookingsService {
@@ -80,10 +88,16 @@ export class BookingsService {
     });
   }
 
+  /**
+   * @param client optional — when supplied, joins the caller's transaction so
+   *               assignment, GPS binding and manifest creation commit or roll
+   *               back as one unit. See DatabaseService.withTenantOn.
+   */
   async assignTruck(
-    companyId: string, userId: string, id: string, dto: AssignTruckDto
+    companyId: string, userId: string, id: string, dto: AssignTruckDto,
+    client?: PoolClient
   ) {
-    return this.db.withTenant(companyId, async (c) => {
+    return this.db.withTenantOn(companyId, client, async (c) => {
       const { rows } = await c.query(
         `SELECT status FROM bookings WHERE id = $1 FOR UPDATE`, [id]
       );
@@ -150,11 +164,45 @@ export class BookingsService {
     });
   }
 
-  /** Called by Domain 3 event handlers, not by HTTP. */
-  async markStatus(companyId: string, id: string, status: "IN_TRANSIT" | "DELIVERED") {
-    await this.db.withTenant(companyId, (c) =>
-      c.query(`UPDATE bookings SET status=$2 WHERE id=$1`, [id, status])
-    );
+  /**
+   * Reflects a custody event. Called by OrchestrationService from the
+   * confirm-delivery WRITE path — never from a GET handler, so the transition
+   * happens exactly once, at the moment delivery becomes final, rather than
+   * whenever somebody happens to poll a dashboard.
+   *
+   * Idempotent by design: re-running it is a no-op, which matters because the
+   * custody chain write that precedes it is not transactional with this update.
+   */
+  async markStatus(
+    companyId: string, id: string, status: "IN_TRANSIT" | "DELIVERED",
+    client?: PoolClient
+  ) {
+    return this.db.withTenantOn(companyId, client, async (c) => {
+      const { rows } = await c.query(
+        `UPDATE bookings SET status=$2
+         WHERE id=$1 AND status IS DISTINCT FROM $2
+         RETURNING id, status`,
+        [id, status]
+      );
+      return { id, status, changed: rows.length > 0 };
+    });
+  }
+
+  /** PHASE B: records the identifiers owned by custody and GPS. */
+  async linkTrip(
+    companyId: string, id: string,
+    fields: { tripId?: string; manifestId?: string },
+    client?: PoolClient
+  ) {
+    return this.db.withTenantOn(companyId, client, async (c) => {
+      await c.query(
+        `UPDATE bookings
+         SET trip_id = COALESCE($2, trip_id),
+             manifest_id = COALESCE($3, manifest_id)
+         WHERE id = $1`,
+        [id, fields.tripId ?? null, fields.manifestId ?? null]
+      );
+    });
   }
 
   private async hydrate(c: any, booking: any) {

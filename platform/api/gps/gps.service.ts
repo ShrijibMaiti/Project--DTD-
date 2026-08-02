@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import type { PoolClient } from "pg";
 import { DatabaseService } from "../common/database.service";
 import { AuditService } from "../common/audit.service";
 import { DeviceRegistry } from "@dtd/gps/ingest/device-registry";
@@ -93,8 +94,8 @@ export class GpsService {
     });
   }
 
-  async endTrip(companyId: string, userId: string, truckId: string) {
-    return this.db.withTenant(companyId, async (c) => {
+  async endTrip(companyId: string, userId: string, truckId: string, client?: PoolClient) {
+    return this.db.withTenantOn(companyId, client, async (c) => {
       const registry = new DeviceRegistry(
         new PgDeviceStore(c, companyId),
         new PgDeviceAlertSink(c, companyId)

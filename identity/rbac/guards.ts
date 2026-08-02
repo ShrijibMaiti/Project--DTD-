@@ -134,6 +134,8 @@ export class DtdAuthGuard implements CanActivate {
     // Remove once every controller uses @CurrentActor().
     req.companyId = actor.companyId;
     req.userId = actor.userId;
+    req.role = actor.role;
+    req.modules = actor.modules;
     return true;
   }
 }

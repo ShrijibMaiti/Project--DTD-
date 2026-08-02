@@ -14,6 +14,7 @@ import { ClaimsModule } from "./claims/claims.module";
 import { SupportModule } from "./support/support.module";
 import { CustodyModule } from "./custody/custody.module";
 import { GpsModule } from "./gps/gps.module";
+import { OrchestrationModule } from "./orchestration/orchestration.module";
 
 /**
  * DtdAuthGuard is registered GLOBALLY, not as middleware.
@@ -24,6 +25,10 @@ import { GpsModule } from "./gps/gps.module";
  * to apply it and the route was wide open. This fails closed.
  *
  * TenantMiddleware is gone entirely; the guard sets req.actor instead.
+ *
+ * OrchestrationModule is listed last because it depends on Bookings, Custody
+ * and GPS. Nest resolves the graph regardless of order, but the ordering
+ * documents the layering: domains first, composition on top.
  */
 @Module({
   imports: [
@@ -40,6 +45,7 @@ import { GpsModule } from "./gps/gps.module";
     SupportModule,
     CustodyModule,
     GpsModule,
+    OrchestrationModule,
   ],
   providers: [
     Reflector,
